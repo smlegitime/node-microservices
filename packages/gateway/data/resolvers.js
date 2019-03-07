@@ -1,34 +1,20 @@
-const mockMails = [
-    {
-        subject: 'Mon premier email',
-        receiver: 'test@example.com',
-        content: 'Salut tout le monde!'
+const axios = require('axios');
+const { serviceDatabase: { port } } = require('../config');
 
-    },
-    {
-        subject: 'Dezyem email mwen',
-        receiver: 'sybille@legitime.ht',
-        content: 'Sak regle menm?'
+const hostName = 'http://localhost'
+const databaseURL = `${ hostName }:${ port }`;
 
-    },
-    {
-        subject: 'My third email',
-        receiver: 'smlegitime@live.com',
-        content: 'This is a legitimate email.'
+// Generic function to perform REST requests from the client
+const get = async path => (await axios.get(`${ databaseURL }/${ path }`)).data.payload;
 
-    },
-];
+const post = async (path, body) => (await axios.post(`${ databaseURL }/${ path }`, { ...body })).data.payload;
 
 module.exports = { 
     Query: {
-        mails: () => mockMails,
-        mail: (_, args) => mockMails[0]
+        mails: () => get('mails'),
+        mail: (_, { id }) => get(`mails/${ id }`)
     },
     Mutation: {
-        mail: (_, args) => {
-            mockMails[0] = args;
-
-            return args;
-        }
+        mail: (_, args) => post('mails', args)
     }
 };
