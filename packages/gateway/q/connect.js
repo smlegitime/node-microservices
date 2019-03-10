@@ -1,12 +1,28 @@
-const amqp = require('amqplib/channel_api');
+const amqp = require('amqplib/callback_api');
+const { q: { uri } } = require('../config')
 
 const q = 'test_q';
-let channel;
+let channel = null;
 
-amqp.connect('amqp://gewbmjdw:a6FYSFwjSDGykHm3EuvNCEdt2hnkXuMj@moose.rmq.cloudamqp.com/gewbmjdw')
-.then(conn => conn.createChannel())
-.then(ch => { 
-    return ch.assertQueue(q, { durable: true })
-    .then(ok => ch.sendToQueue(q, Buffer.from('Hello RabbitMQ')))
-})
-.catch(err => { throw new Error(err) });
+amqp.connect( uri, (err, conn) => {
+    if (err) throw new Error(err);
+
+    conn.createChannel((err, ch) => {
+        if (err) throw new Error(err);
+
+        ch.assertQueue(q, { durable: true });
+        
+        channel = ch;
+    });
+});
+
+const pushToMessageQ = (msg) => {
+    if (!channel) setTimeout(pushToMessageQ(msg), 1000);
+
+    channel.sendToQueue(q, Buffer.from(msg));
+    return { m: 'Done' };
+};
+
+module.exports = {
+    pushToMessageQ
+};
